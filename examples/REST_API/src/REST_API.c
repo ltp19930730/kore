@@ -22,7 +22,7 @@ api(struct http_request *req)
 	}
 
 	/* generate a test json oject */
-  games = json_object_new_object();
+	games = json_object_new_object();
 	if (NULL == games) {
 		printf("new games json object failed.\n");
 		return (KORE_RESULT_OK);
@@ -44,7 +44,7 @@ api(struct http_request *req)
 
 	body = json_object_to_json_string_ext(games, JSON_PRINT_FLAGS);
 
-  http_response_header(req, "content-type", "application/json");
+	http_response_header(req, "content-type", "application/json");
 
 
 	http_response(req, 200, body, strlen(body));
