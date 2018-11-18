@@ -6,13 +6,25 @@
 int		api(struct http_request *);
 
 #define JSON_PRINT_FLAGS JSON_C_TO_STRING_PRETTY|JSON_C_TO_STRING_SPACED
+#define JSON_FILE "game.json"
+#define API_PATH "/api/"
+
+const char *api_allow[] = {
+	"Version",
+	"Domain",
+	"Status",
+	"Game",
+};
+#define API_ALLOWED_NUM (int)sizeof(api_allow)/sizeof(api_allow[0])
+#define MAX_SUBURL 4
 
 int
 api(struct http_request *req)
 {
 	const char *body;
-	struct json_object *games = NULL;
-	struct json_object *status = NULL;
+	char *sub_url[MAX_SUBURL];
+	struct json_object *games = NULL, *res = NULL;
+	int i, j, url_num;
 
 	if (req->method != HTTP_METHOD_POST &&
 			req->method != HTTP_METHOD_GET) {
@@ -21,33 +33,32 @@ api(struct http_request *req)
 		return (KORE_RESULT_OK);
 	}
 
+	url_num = kore_split_string(req->path, "/", sub_url, MAX_SUBURL);
+	
 	/* generate a test json oject */
-	games = json_object_new_object();
-	if (NULL == games) {
-		printf("new games json object failed.\n");
-		return (KORE_RESULT_OK);
+	games = json_object_from_file(JSON_FILE);
+	
+	res = games;
+	for (i = 0; i < url_num; i++) {
+		if (i == 0) {
+			if (!strcmp("api", sub_url[i])) {
+					continue;
+			} else {
+					break;
+			}
+		}
+		for (j = 0; j < API_ALLOWED_NUM; j++) {
+			if (!strcmp(sub_url[i], api_allow[j])) {
+				res = json_object_object_get(res, api_allow[j]);
+			}
+		}
 	}
 
-	status = json_object_new_object();
-	if (NULL == status) {
-		json_object_put(games);
-		printf("new status json object failed.\n");
-		return (KORE_RESULT_OK);
-	}
-	// TODO
-	json_object_object_add(status, "Version", json_object_new_string("1.2.3.4"));
-	json_object_object_add(status, "Domain", json_object_new_string("USA"));
-
-	// TODO
-	json_object_object_add(games, "status", status);
-	json_object_object_add(games, "game", json_object_new_string("DOTA2"));
-
-	body = json_object_to_json_string_ext(games, JSON_PRINT_FLAGS);
-
+	body = json_object_to_json_string_ext(res, JSON_PRINT_FLAGS);
+	
 	http_response_header(req, "content-type", "application/json");
-
-
 	http_response(req, 200, body, strlen(body));
+	
 	json_object_put(games);
 
 	return KORE_RESULT_OK;

@@ -1,0 +1,11 @@
+{
+   "Status": {
+     "Version": "1.2.3.4",
+     "Domain": "USA"
+   },
+   "Game": [ 
+     "DOTA2",
+     "League of Legend",
+     "Pokemon Let's Go"
+   ]
+ }
